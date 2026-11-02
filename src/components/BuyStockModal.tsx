@@ -28,8 +28,8 @@ export const BuyStockModal: React.FC = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStock, setSelectedStock] = useState<{ ticker: string; name: string } | null>(null);
-  const [lots, setLots] = useState<number>(5);
-  const [buyPrice, setBuyPrice] = useState<number>(9000);
+  const [lots, setLots] = useState<string>('5');
+  const [buyPrice, setBuyPrice] = useState<string>('9000');
   const [targetTp, setTargetTp] = useState<string>('');
   const [targetCl, setTargetCl] = useState<string>('');
   const [selectedAccountId, setSelectedAccountId] = useState<string>(() => {
@@ -48,27 +48,29 @@ export const BuyStockModal: React.FC = () => {
     // Check cached price
     const cached = stockCache[stock.ticker];
     if (cached) {
-      setBuyPrice(cached.current_price);
+      setBuyPrice(String(cached.current_price));
     } else {
       const live = await fetchStockPriceFromYahoo(stock.ticker);
-      if (live) setBuyPrice(live.current_price);
+      if (live) setBuyPrice(String(live.current_price));
     }
   };
 
-  const grossCost = (lots || 0) * 100 * (buyPrice || 0);
+  const numLots = Number(lots) || 0;
+  const numBuyPrice = Number(buyPrice) || 0;
+  const grossCost = numLots * 100 * numBuyPrice;
   const brokerFee = grossCost * (profile.default_buy_fee / 100);
   const totalCost = grossCost + brokerFee;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const finalTicker = selectedStock?.ticker || searchQuery.toUpperCase().trim();
-    if (!finalTicker || lots <= 0 || buyPrice <= 0) return;
+    if (!finalTicker || numLots <= 0 || numBuyPrice <= 0) return;
 
     buyStock({
       ticker: finalTicker,
       companyName: selectedStock?.name || `${finalTicker} Tbk`,
-      lots: Number(lots),
-      avgPrice: Number(buyPrice),
+      lots: numLots,
+      avgPrice: numBuyPrice,
       targetTp: targetTp ? Number(targetTp) : undefined,
       targetCl: targetCl ? Number(targetCl) : undefined,
       accountId: selectedAccountId,
@@ -144,12 +146,13 @@ export const BuyStockModal: React.FC = () => {
               <input
                 type="number"
                 min="1"
+                placeholder="1"
                 value={lots}
-                onChange={(e) => setLots(Math.max(1, parseInt(e.target.value) || 0))}
+                onChange={(e) => setLots(e.target.value)}
                 className="w-full mt-1 px-3 py-2.5 bg-surface-container-low rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/40 border border-outline-variant/30"
                 required
               />
-              <span className="text-[10px] text-outline mt-0.5 block">{lots * 100} lembar saham</span>
+              <span className="text-[10px] text-outline mt-0.5 block">{numLots * 100} lembar saham</span>
             </div>
 
             <div>
@@ -157,12 +160,13 @@ export const BuyStockModal: React.FC = () => {
               <input
                 type="number"
                 min="1"
+                placeholder="0"
                 value={buyPrice}
-                onChange={(e) => setBuyPrice(Math.max(1, parseInt(e.target.value) || 0))}
+                onChange={(e) => setBuyPrice(e.target.value)}
                 className="w-full mt-1 px-3 py-2.5 bg-surface-container-low rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/40 border border-outline-variant/30"
                 required
               />
-              <span className="text-[10px] text-outline mt-0.5 block">Rp {buyPrice.toLocaleString('id-ID')}</span>
+              <span className="text-[10px] text-outline mt-0.5 block">Rp {numBuyPrice.toLocaleString('id-ID')}</span>
             </div>
           </div>
 

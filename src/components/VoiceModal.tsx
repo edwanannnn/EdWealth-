@@ -13,6 +13,8 @@ export const VoiceModal: React.FC = () => {
   const [isAutoMode, setIsAutoMode] = useState(true);
   const [isSaved, setIsSaved] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(true);
+  const [micNotice, setMicNotice] = useState<string | null>(null);
+  const [textInput, setTextInput] = useState<string>('');
 
   // Editable fields in review card
   const [customAmount, setCustomAmount] = useState<number>(0);
@@ -31,6 +33,8 @@ export const VoiceModal: React.FC = () => {
       setParsedResult(null);
       setIsSaved(false);
       setRecordingSeconds(0);
+      setMicNotice(null);
+      setTextInput('');
       return;
     }
 
@@ -48,15 +52,21 @@ export const VoiceModal: React.FC = () => {
     };
   }, [isVoiceModalOpen, cashAccounts]);
 
+  const triggerSample = (sampleText: string) => {
+    setTranscript(sampleText);
+    const parsed = parseVoiceTransaction(sampleText);
+    applyParsedResult(parsed);
+  };
+
   const startListening = () => {
+    setMicNotice(null);
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    
+    // In mobile browsers over HTTP, Web Speech is often blocked by Chrome security policy
     if (!SpeechRecognition) {
       setSpeechSupported(false);
-      // Demo sample fallback
-      const sample = 'Beli nasi padang 25 ribu pakai QRIS SeaBank barusan';
-      setTranscript(sample);
-      const parsed = parseVoiceTransaction(sample);
-      applyParsedResult(parsed);
+      setMicNotice('Browser Anda tidak mendukung Web Speech API di HTTP. Coba gunakan sampel atau jalankan di APK.');
+      triggerSample('Beli nasi padang 25 ribu pakai QRIS SeaBank barusan');
       return;
     }
 
@@ -93,8 +103,15 @@ export const VoiceModal: React.FC = () => {
       };
 
       recognition.onerror = (e: any) => {
-        console.warn('Speech recognition status/error:', e.error);
+        console.warn('Speech recognition error/status:', e.error);
         stopListening();
+        if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+          setMicNotice('Mikrofon fisik memerlukan koneksi HTTPS / Aplikasi APK. Di browser web saat ini, Anda bisa langsung ketik kalimat suara atau ketuk sampel pintar di bawah.');
+          // Auto-trigger sample so user sees result immediately
+          if (!parsedResult) {
+            triggerSample('Beli nasi padang 25 ribu pakai QRIS SeaBank barusan');
+          }
+        }
       };
 
       recognition.onend = () => {
@@ -103,9 +120,11 @@ export const VoiceModal: React.FC = () => {
 
       recognitionRef.current = recognition;
       recognition.start();
-    } catch (err) {
-      console.error('Failed to start speech recognition', err);
+    } catch (err: any) {
+      console.warn('Speech recognition start failed:', err);
       setIsListening(false);
+      setMicNotice('Mikrofon fisik memerlukan aplikasi APK (karena HTTPS). Silakan coba sampel pintar di bawah!');
+      triggerSample('Beli nasi padang 25 ribu pakai QRIS SeaBank barusan');
     }
   };
 
@@ -145,6 +164,7 @@ export const VoiceModal: React.FC = () => {
     setTranscript('');
     setParsedResult(null);
     setRecordingSeconds(0);
+    setMicNotice(null);
     startListening();
   };
 
@@ -217,8 +237,16 @@ export const VoiceModal: React.FC = () => {
           </div>
         </div>
 
+        {/* Informative notice if browser blocks mic over HTTP */}
+        {micNotice && (
+          <div className="my-2 p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2">
+            <span className="material-symbols-outlined text-amber-700 text-[18px] shrink-0 mt-0.5">info</span>
+            <p className="leading-snug text-[11px]">{micNotice}</p>
+          </div>
+        )}
+
         {/* Interactive Big Microphone Button (User explicitly presses to trigger recording) */}
-        <div className="flex flex-col items-center justify-center my-3 py-2">
+        <div className="flex flex-col items-center justify-center my-2 py-1">
           <div className="relative">
             {isListening && (
               <>
@@ -230,13 +258,13 @@ export const VoiceModal: React.FC = () => {
             <button
               type="button"
               onClick={toggleListening}
-              className={`relative z-10 w-24 h-24 rounded-full flex flex-col items-center justify-center shadow-xl active:scale-95 transition-all duration-200 cursor-pointer ${
+              className={`relative z-10 w-22 h-22 rounded-full flex flex-col items-center justify-center shadow-xl active:scale-95 transition-all duration-200 cursor-pointer ${
                 isListening
                   ? 'bg-gradient-to-tr from-error to-red-400 text-white shadow-error/40 scale-105 ring-4 ring-error/30'
                   : 'bg-gradient-to-tr from-primary to-primary-container text-white shadow-primary/30 hover:scale-105 ring-4 ring-primary/20'
               }`}
             >
-              <span className={`material-symbols-outlined text-[36px] ${isListening ? 'animate-pulse' : ''}`} style={{ fontVariationSettings: "'FILL' 1" }}>
+              <span className={`material-symbols-outlined text-[34px] ${isListening ? 'animate-pulse' : ''}`} style={{ fontVariationSettings: "'FILL' 1" }}>
                 {isListening ? 'stop' : 'mic'}
               </span>
               <span className="text-[10px] font-extrabold mt-0.5 uppercase tracking-wider">
@@ -245,29 +273,83 @@ export const VoiceModal: React.FC = () => {
             </button>
           </div>
 
-          <div className="text-center mt-3">
+          <div className="text-center mt-2.5">
             <p className="text-xs font-bold text-on-surface">
               {isListening 
                 ? 'Sedang mendengarkan... Ketuk tombol merah untuk selesai' 
                 : 'Ketuk tombol Mic di atas jika sudah siap bicara'}
             </p>
-            <p className="text-[11px] text-outline mt-0.5">
-              Contoh: <span className="font-semibold text-primary">"Beli nasi padang 25 ribu pakai QRIS SeaBank"</span>
-            </p>
+          </div>
+        </div>
+
+        {/* Quick Testing Chips & Direct Sentence Input (Works 100% on Mobile Web & APK) */}
+        <div className="w-full my-2 p-3 bg-surface-container-low rounded-2xl border border-outline-variant/30 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-outline uppercase tracking-wider">
+              Coba Sampel Suara (1-Ketuk Tes AI):
+            </span>
+            <span className="text-[10px] text-primary font-bold">Instan</span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-1.5">
+            {[
+              { label: '🍛 Nasi Padang 25rb QRIS', text: 'Beli nasi padang 25 ribu pakai QRIS SeaBank' },
+              { label: '💼 Gaji Masuk 15jt BCA', text: 'Dapat gaji bulanan 15 juta masuk ke rekening BCA' },
+              { label: '⛽ Bensin 50rb Tunai', text: 'Isi bensin pertamax 50 ribu uang tunai' },
+              { label: '📈 Dividen 1jt RDN', text: 'Dapat dividen saham 1 juta masuk ke RDN Stockbit' },
+            ].map((chip, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => triggerSample(chip.text)}
+                className="px-2.5 py-1.5 rounded-xl bg-surface-container hover:bg-primary/10 text-on-surface text-[11px] font-bold border border-outline-variant/20 active:scale-95 transition-all text-left truncate"
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Direct Text Input for testing without physical mic on HTTP */}
+          <div className="flex gap-1.5 pt-1">
+            <input 
+              type="text"
+              placeholder="Atau ketik ucapan: e.g. makan bakso 20000 tunai..."
+              value={textInput}
+              onChange={e => setTextInput(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && textInput.trim()) {
+                  triggerSample(textInput.trim());
+                  setTextInput('');
+                }
+              }}
+              className="flex-1 px-3 py-1.5 bg-surface-container rounded-xl text-xs font-semibold border border-outline-variant/40 focus:outline-none focus:border-primary text-on-surface"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                if (textInput.trim()) {
+                  triggerSample(textInput.trim());
+                  setTextInput('');
+                }
+              }}
+              className="px-3 py-1.5 bg-primary text-white text-xs font-bold rounded-xl active:scale-95 shadow-xs"
+            >
+              Proses
+            </button>
           </div>
         </div>
 
         {/* Real-time Waveform & Audio Transcription Bubble */}
-        <div className="rounded-2xl bg-inverse-surface p-3.5 shadow-xl text-inverse-on-surface flex flex-col items-center relative overflow-hidden mb-3">
+        <div className="rounded-2xl bg-inverse-surface p-3 shadow-xl text-inverse-on-surface flex flex-col items-center relative overflow-hidden mb-2.5">
           <div className="absolute inset-0 bg-gradient-to-t from-primary/20 via-tertiary-container/10 to-transparent pointer-events-none"></div>
           
           {/* Animated Waveform Frequency Bars */}
-          <div className="flex items-center justify-center gap-1.5 h-10 w-full my-0.5">
-            {[14, 26, 40, 44, 32, 40, 22, 12].map((h, idx) => (
+          <div className="flex items-center justify-center gap-1.5 h-8 w-full my-0.5">
+            {[12, 22, 34, 38, 28, 34, 18, 10].map((h, idx) => (
               <span 
                 key={idx}
                 style={{ 
-                  height: isListening ? `${Math.max(6, (h + (Math.sin(recordingSeconds * 3 + idx) * 14)))}px` : '8px' 
+                  height: isListening ? `${Math.max(6, (h + (Math.sin(recordingSeconds * 3 + idx) * 12)))}px` : '6px' 
                 }}
                 className="w-1.5 bg-gradient-to-t from-tertiary-fixed to-primary-container rounded-full transition-all duration-200"
               />
@@ -275,9 +357,9 @@ export const VoiceModal: React.FC = () => {
           </div>
 
           {/* Live Transcribed Text Bubble */}
-          <div className="w-full bg-white/10 backdrop-blur-md rounded-xl p-2.5 text-center mt-1">
+          <div className="w-full bg-white/10 backdrop-blur-md rounded-xl p-2 text-center mt-1">
             <p className="text-xs text-inverse-on-surface font-medium leading-relaxed italic">
-              {transcript ? `“${transcript}”` : isListening ? "Mendengarkan suara Anda..." : "Transkrip suara akan muncul di sini..."}
+              {transcript ? `“${transcript}”` : isListening ? "Mendengarkan suara Anda..." : "Transkrip suara / hasil ketikan akan muncul di sini..."}
             </p>
           </div>
         </div>
@@ -387,16 +469,13 @@ export const VoiceModal: React.FC = () => {
             <button
               onClick={() => {
                 if (!parsedResult) {
-                  const sample = 'Beli nasi padang 25000';
-                  setTranscript(sample);
-                  const parsed = parseVoiceTransaction(sample);
-                  applyParsedResult(parsed);
+                  triggerSample('Beli sarapan pagi 20000');
                 }
               }}
               className="py-2 px-3 rounded-full bg-surface-container text-on-surface font-bold text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all"
             >
               <span className="material-symbols-outlined text-[15px]">edit</span>
-              <span>Coba Sampel</span>
+              <span>Sampel Manual</span>
             </button>
           </div>
         </div>

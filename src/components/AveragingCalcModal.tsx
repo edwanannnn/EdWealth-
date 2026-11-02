@@ -5,33 +5,38 @@ export const AveragingCalcModal: React.FC = () => {
   const { isAveragingModalOpen, setIsAveragingModalOpen, portfolio, profile } = useApp();
 
   const [selectedTicker, setSelectedTicker] = useState<string>(portfolio[0]?.ticker || 'BBCA');
-  const [currentLots, setCurrentLots] = useState<number>(portfolio[0]?.lots || 10);
-  const [currentAvgPrice, setCurrentAvgPrice] = useState<number>(portfolio[0]?.avg_price || 9000);
+  const [currentLots, setCurrentLots] = useState<string>(portfolio[0] ? String(portfolio[0].lots) : '10');
+  const [currentAvgPrice, setCurrentAvgPrice] = useState<string>(portfolio[0] ? String(portfolio[0].avg_price) : '9000');
   
-  const [newLots, setNewLots] = useState<number>(10);
-  const [newBuyPrice, setNewBuyPrice] = useState<number>(8500);
+  const [newLots, setNewLots] = useState<string>('10');
+  const [newBuyPrice, setNewBuyPrice] = useState<string>('8500');
 
   const handleSelectStock = (ticker: string) => {
     setSelectedTicker(ticker);
     const item = portfolio.find(p => p.ticker === ticker);
     if (item) {
-      setCurrentLots(item.lots);
-      setCurrentAvgPrice(item.avg_price);
+      setCurrentLots(String(item.lots));
+      setCurrentAvgPrice(String(item.avg_price));
     }
   };
 
   // Calculations
-  const currentCost = currentLots * 100 * currentAvgPrice;
-  const newGrossCost = newLots * 100 * newBuyPrice;
+  const numCurrentLots = Number(currentLots) || 0;
+  const numCurrentAvgPrice = Number(currentAvgPrice) || 0;
+  const numNewLots = Number(newLots) || 0;
+  const numNewBuyPrice = Number(newBuyPrice) || 0;
+
+  const currentCost = numCurrentLots * 100 * numCurrentAvgPrice;
+  const newGrossCost = numNewLots * 100 * numNewBuyPrice;
   const newFee = newGrossCost * (profile.default_buy_fee / 100);
   const totalNewCapital = newGrossCost + newFee;
 
-  const totalCombinedLots = (currentLots || 0) + (newLots || 0);
+  const totalCombinedLots = numCurrentLots + numNewLots;
   const combinedCost = currentCost + newGrossCost;
   const newAvgPrice = totalCombinedLots > 0 ? Math.round(combinedCost / (totalCombinedLots * 100)) : 0;
   
-  const avgDiff = newAvgPrice - currentAvgPrice;
-  const avgDiffPct = currentAvgPrice > 0 ? (avgDiff / currentAvgPrice) * 100 : 0;
+  const avgDiff = newAvgPrice - numCurrentAvgPrice;
+  const avgDiffPct = numCurrentAvgPrice > 0 ? (avgDiff / numCurrentAvgPrice) * 100 : 0;
 
   if (!isAveragingModalOpen) return null;
 
@@ -86,7 +91,8 @@ export const AveragingCalcModal: React.FC = () => {
                   type="number"
                   min="1"
                   value={currentLots}
-                  onChange={(e) => setCurrentLots(Math.max(1, parseInt(e.target.value) || 0))}
+                  onChange={(e) => setCurrentLots(e.target.value)}
+                  placeholder="1"
                   className="w-full mt-0.5 px-3 py-2 bg-surface rounded-xl text-sm font-bold focus:outline-none border border-outline-variant/30"
                 />
               </div>
@@ -96,7 +102,8 @@ export const AveragingCalcModal: React.FC = () => {
                   type="number"
                   min="1"
                   value={currentAvgPrice}
-                  onChange={(e) => setCurrentAvgPrice(Math.max(1, parseInt(e.target.value) || 0))}
+                  onChange={(e) => setCurrentAvgPrice(e.target.value)}
+                  placeholder="0"
                   className="w-full mt-0.5 px-3 py-2 bg-surface rounded-xl text-sm font-bold focus:outline-none border border-outline-variant/30"
                 />
               </div>
@@ -113,7 +120,8 @@ export const AveragingCalcModal: React.FC = () => {
                   type="number"
                   min="1"
                   value={newLots}
-                  onChange={(e) => setNewLots(Math.max(1, parseInt(e.target.value) || 0))}
+                  onChange={(e) => setNewLots(e.target.value)}
+                  placeholder="1"
                   className="w-full mt-0.5 px-3 py-2 bg-surface rounded-xl text-sm font-bold focus:outline-none border border-outline-variant/30"
                 />
               </div>
@@ -123,7 +131,8 @@ export const AveragingCalcModal: React.FC = () => {
                   type="number"
                   min="1"
                   value={newBuyPrice}
-                  onChange={(e) => setNewBuyPrice(Math.max(1, parseInt(e.target.value) || 0))}
+                  onChange={(e) => setNewBuyPrice(e.target.value)}
+                  placeholder="0"
                   className="w-full mt-0.5 px-3 py-2 bg-surface rounded-xl text-sm font-bold focus:outline-none border border-outline-variant/30"
                 />
               </div>
@@ -148,7 +157,7 @@ export const AveragingCalcModal: React.FC = () => {
               }`}>
                 {avgDiff <= 0 ? 'Turun' : 'Naik'} {Math.abs(avgDiff).toLocaleString('id-ID')} ({Math.abs(avgDiffPct).toFixed(2)}%)
               </span>
-              <span className="opacity-80 text-[11px]">dari harga awal Rp {currentAvgPrice.toLocaleString('id-ID')}</span>
+              <span className="opacity-80 text-[11px]">dari harga awal Rp {numCurrentAvgPrice.toLocaleString('id-ID')}</span>
             </div>
           </div>
 

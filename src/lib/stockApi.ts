@@ -11,7 +11,7 @@ const BASELINE_PRICES: Record<string, { price: number; prevClose: number }> = {
   ASII: { price: 5100, prevClose: 5050 },
   AMMN: { price: 9250, prevClose: 9100 },
   BUMI: { price: 142, prevClose: 138 },
-  CUAN: { price: 7400, prevClose: 7150 },
+  CUAN: { price: 408, prevClose: 456 },
   GOTO: { price: 68, prevClose: 67 },
   ADRO: { price: 3700, prevClose: 3650 },
   ANTM: { price: 1580, prevClose: 1550 },
@@ -34,13 +34,18 @@ export async function fetchStockPriceFromYahoo(ticker: string): Promise<StockMar
   const cleanTicker = ticker.toUpperCase().trim();
   const yahooSymbol = `${cleanTicker}.JK`;
 
-  const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?interval=1d&range=5d`;
+  const yahooPath = `/v8/finance/chart/${yahooSymbol}?interval=1d&range=5d`;
+  const directTargetUrl = `https://query1.finance.yahoo.com${yahooPath}`;
 
-  // List of endpoints to try (direct, and transparent proxies if CORS blocks in web browser)
+  // Endpoints to try:
+  // 1. Vite proxy for smooth CORS-free browser web testing (/api/yahoo)
+  // 2. Direct Yahoo Finance endpoint (native Android APK Capacitor webview)
+  // 3. Transparent CORS proxies as public fallback
   const endpoints = [
-    targetUrl,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
-    `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`
+    `/api/yahoo${yahooPath}`,
+    directTargetUrl,
+    `https://corsproxy.io/?url=${encodeURIComponent(directTargetUrl)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(directTargetUrl)}`
   ];
 
   for (const url of endpoints) {

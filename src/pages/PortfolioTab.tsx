@@ -71,7 +71,7 @@ export const PortfolioTab: React.FC = () => {
           className="py-3 px-4 rounded-full bg-primary text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-primary/20 active:scale-95 transition-transform"
         >
           <span className="material-symbols-outlined text-[18px]">add_circle</span>
-          <span>+ Beli Saham Baru</span>
+          <span>Beli Saham Baru</span>
         </button>
 
         <button
@@ -97,7 +97,7 @@ export const PortfolioTab: React.FC = () => {
             <div className="py-12 text-center text-outline bg-surface-container-lowest rounded-2xl border border-outline-variant/20">
               <span className="material-symbols-outlined text-4xl mb-2 text-primary">add_chart</span>
               <p className="text-sm font-bold text-on-surface">Belum ada saham di portofolio</p>
-              <p className="text-xs text-outline mt-1">Tap tombol "+ Beli Saham Baru" di atas untuk mulai mencatat.</p>
+              <p className="text-xs text-outline mt-1">Tap tombol "Beli Saham Baru" di atas untuk mulai mencatat.</p>
             </div>
           ) : (
             portfolio.map(stock => {

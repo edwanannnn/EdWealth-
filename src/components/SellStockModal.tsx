@@ -8,15 +8,15 @@ export const SellStockModal: React.FC = () => {
     cashAccounts, profile, stockCache 
   } = useApp();
 
-  const [lotsToSell, setLotsToSell] = useState<number>(1);
-  const [sellPrice, setSellPrice] = useState<number>(0);
+  const [lotsToSell, setLotsToSell] = useState<string>('1');
+  const [sellPrice, setSellPrice] = useState<string>('0');
   const [selectedAccountId, setSelectedAccountId] = useState<string>('');
 
   useEffect(() => {
     if (selectedStockToSell) {
-      setLotsToSell(selectedStockToSell.lots);
+      setLotsToSell(String(selectedStockToSell.lots));
       const livePrice = stockCache[selectedStockToSell.ticker]?.current_price || selectedStockToSell.avg_price;
-      setSellPrice(livePrice);
+      setSellPrice(String(livePrice));
       const rdn = cashAccounts.find(a => a.account_type === 'RDN') || cashAccounts[0];
       setSelectedAccountId(rdn?.id || '');
     }
@@ -24,22 +24,24 @@ export const SellStockModal: React.FC = () => {
 
   if (!isSellStockModalOpen || !selectedStockToSell) return null;
 
-  const grossSale = (lotsToSell || 0) * 100 * (sellPrice || 0);
+  const numLotsToSell = Number(lotsToSell) || 0;
+  const numSellPrice = Number(sellPrice) || 0;
+  const grossSale = numLotsToSell * 100 * numSellPrice;
   const sellFee = grossSale * (profile.default_sell_fee / 100);
   const netProceeds = grossSale - sellFee;
-  const costBasis = (lotsToSell || 0) * 100 * selectedStockToSell.avg_price;
+  const costBasis = numLotsToSell * 100 * selectedStockToSell.avg_price;
   const realizedPnl = netProceeds - costBasis;
   const realizedPnlPct = costBasis > 0 ? (realizedPnl / costBasis) * 100 : 0;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (lotsToSell <= 0 || sellPrice <= 0 || !selectedAccountId) return;
+    if (numLotsToSell <= 0 || numLotsToSell > selectedStockToSell.lots || numSellPrice <= 0 || !selectedAccountId) return;
 
     sellStock({
       portfolioId: selectedStockToSell.id,
       ticker: selectedStockToSell.ticker,
-      lotsToSell: Number(lotsToSell),
-      sellPrice: Number(sellPrice),
+      lotsToSell: numLotsToSell,
+      sellPrice: numSellPrice,
       accountId: selectedAccountId,
     });
 
@@ -85,11 +87,12 @@ export const SellStockModal: React.FC = () => {
                 min="1"
                 max={selectedStockToSell.lots}
                 value={lotsToSell}
-                onChange={(e) => setLotsToSell(Math.min(selectedStockToSell.lots, Math.max(1, parseInt(e.target.value) || 0)))}
+                onChange={(e) => setLotsToSell(e.target.value)}
+                placeholder="1"
                 className="w-full mt-1 px-3 py-2.5 bg-surface-container-low rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/40 border border-outline-variant/30"
                 required
               />
-              <span className="text-[10px] text-outline mt-0.5 block">{lotsToSell * 100} lembar</span>
+              <span className="text-[10px] text-outline mt-0.5 block">{numLotsToSell * 100} lembar</span>
             </div>
 
             <div>
@@ -98,11 +101,12 @@ export const SellStockModal: React.FC = () => {
                 type="number"
                 min="1"
                 value={sellPrice}
-                onChange={(e) => setSellPrice(Math.max(1, parseInt(e.target.value) || 0))}
+                onChange={(e) => setSellPrice(e.target.value)}
+                placeholder="0"
                 className="w-full mt-1 px-3 py-2.5 bg-surface-container-low rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/40 border border-outline-variant/30"
                 required
               />
-              <span className="text-[10px] text-outline mt-0.5 block">Rp {sellPrice.toLocaleString('id-ID')}</span>
+              <span className="text-[10px] text-outline mt-0.5 block">Rp {numSellPrice.toLocaleString('id-ID')}</span>
             </div>
           </div>
 

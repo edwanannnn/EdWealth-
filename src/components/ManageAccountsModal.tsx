@@ -165,7 +165,7 @@ export const ManageAccountsModal: React.FC = () => {
               className="w-full py-2.5 px-3 rounded-2xl border-2 border-dashed border-primary/30 text-primary hover:bg-primary/5 flex items-center justify-center gap-1.5 text-xs font-bold active:scale-98 transition-all"
             >
               <span className="material-symbols-outlined text-[18px]">add_circle</span>
-              <span>+ Tambah Rekening / Dompet Baru</span>
+              <span>Tambah Rekening / Dompet Baru</span>
             </button>
           ) : (
             <form onSubmit={handleCreateAccount} className="p-3.5 bg-surface-container-lowest rounded-2xl border border-primary/30 space-y-3">
