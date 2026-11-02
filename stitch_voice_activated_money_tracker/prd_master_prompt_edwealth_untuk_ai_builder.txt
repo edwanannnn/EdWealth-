@@ -1,0 +1,119 @@
+# PRD & Technical Specification: EdWealth Mobile App
+
+## 1. Project Overview & Product Vision
+**Product Name:** EdWealth  
+**Platform:** Mobile Web / Hybrid Mobile App (PWA / React Native / Capacitor / Next.js)  
+**Core Purpose:** Comprehensive Personal Wealth & Investment Tracker. Menggabungkan pencatatan kas harian (liquid cashflow), portofolio saham IDX (dengan real-time/cached price fetching), pelacakan pengeluaran pasti (fixed expenses), dan pendapatan pasif (passive income) dalam satu kesatuan perhitungan **Total Net Worth** yang aman dan privat.
+
+---
+
+## 2. Core Architecture & Tech Stack Recommendation
+- **Frontend:** Next.js (App Router) / React + Vite + Tailwind CSS + Lucide React + Plus Jakarta Sans typography.
+- **Backend & Database:** Supabase (PostgreSQL, Supabase Auth, Row Level Security, Edge Functions).
+- **Data Fetching & State:** TanStack Query (React Query) & Zustand (untuk local cache / offline-first state).
+- **Stock Price Data Source:** Yahoo Finance API (`yahoo-finance2` via Supabase Edge Function) atau GoAPI (IDX stocks).
+
+---
+
+## 3. Database Schema (Supabase PostgreSQL DDL)
+
+```sql
+-- 1. PROFILES
+create table public.profiles (
+  id uuid references auth.users on delete cascade primary key,
+  full_name text,
+  email text,
+  currency text default 'IDR',
+  created_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+-- 2. CASH ACCOUNTS (Rekening / Dompet Kas)
+create table public.cash_accounts (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users not null,
+  account_name text not null, -- e.g. "BCA", "SeaBank", "Cash Dompet"
+  balance numeric not null default 0,
+  updated_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+-- 3. TRANSACTIONS (Pencatatan Arus Kas Harian & Fixed Cost)
+create table public.transactions (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users not null,
+  account_id uuid references public.cash_accounts(id) on delete set null,
+  title text not null,
+  amount numeric not null,
+  type text check (type in ('EXPENSE', 'INCOME', 'TRANSFER')),
+  category text not null, -- "Makanan", "Tagihan Rutin", "Gaji", "Dividen"
+  is_fixed_expense boolean default false,
+  due_date integer, -- Tanggal jatuh tempo rutin (1-31)
+  transaction_date date default current_date,
+  created_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+-- 4. STOCK PORTFOLIO (Portofolio Saham IDX)
+create table public.stock_portfolio (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users not null,
+  ticker text not null, -- e.g. "BBCA", "BBRI", "ADRO", "ASII"
+  lots integer not null check (lots > 0), -- 1 lot = 100 lembar
+  avg_price numeric not null check (avg_price > 0),
+  notes text,
+  created_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+-- 5. STOCK MARKET CACHE (Auto-fetched dari Yahoo Finance API)
+create table public.stock_market_cache (
+  ticker text primary key,
+  current_price numeric not null,
+  previous_close numeric,
+  change_amount numeric,
+  change_percentage numeric,
+  last_updated timestamp with time zone default timezone('utc'::text, now())
+);
+
+-- 6. PASSIVE INCOMES (Sumber Pendapatan Pasif)
+create table public.passive_incomes (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users not null,
+  source_name text not null, -- e.g. "Dividen Saham BBCA", "Bunga Deposito", "SBN"
+  amount numeric not null,
+  frequency text default 'MONTHLY' check (frequency in ('MONTHLY', 'QUARTERLY', 'ANNUAL')),
+  received_date date default current_date
+);
+```
+
+---
+
+## 4. Business Logic & Calculations
+
+1. **Total Net Worth:**
+   $$\text{Total Net Worth} = \sum(\text{Cash Balances}) + \sum(\text{Stock Lots} \times 100 \times \text{Current Stock Price})$$
+
+2. **Floating Profit / Loss Per Emiten:**
+   $$\text{Gain/Loss (Rp)} = (\text{Current Price} - \text{Avg Price}) \times \text{Lots} \times 100$$
+   $$\text{Gain/Loss (\%)} = \left(\frac{\text{Current Price} - \text{Avg Price}}{\text{Avg Price}}\right) \times 100$$
+
+3. **Financial Freedom Health Index (Coverage Ratio):**
+   $$\text{Rasio Tertutupi} = \left(\frac{\text{Total Monthly Passive Income}}{\text{Total Monthly Fixed Expenses}}\right) \times 100$$
+
+---
+
+## 5. UI Architecture & Navigation Structure (Mobile 4 Tabs)
+
+- **Tab 1: Beranda (Dashboard Overview)**
+  - Top Card: Total Net Worth, Sisa Kas Likuid vs Nilai Saham.
+  - Widget Financial Freedom: Rasio Passive Income vs Fixed Expenses.
+  - Quick Action button (+) & ringkasan mutasi terbaru.
+- **Tab 2: Portofolio (Saham & Investasi)**
+  - Total Nilai Portofolio, Modal Pokok Terinvestasi, Total Floating P/L (Rp & %).
+  - Card Data Vault Offline (jaminan privasi tersimpan lokal/cloud secure).
+  - Quick action: Beli Saham, Catat Dividen.
+  - List Emiten: Ticker, Badge sektor, Total Lot, Avg Buy Price, Market Price, Floating P/L.
+- **Tab 3: Passive & Fixed (Fixed Cost & Passive Income)**
+  - Financial Freedom Health Index gauge (58% tertutupi, sisa target nominal bebas biaya pasti).
+  - Section Tagihan Rutin Pasti: List jatuh tempo, badge status lunas/menunggu bayar.
+  - Section Sumber Pasif: Dividen rutin, kupon SBN/deposito, bagi hasil usaha.
+- **Tab 4: Riwayat (Daftar & Riwayat Transaksi)**
+  - Filter waktu & kategori transaksi.
+  - List pengeluaran harian dan cashflow history.
