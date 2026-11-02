@@ -35,7 +35,7 @@ export const LedgerTab: React.FC = () => {
   const categories = Array.from(new Set(transactions.map(t => t.category)));
 
   return (
-    <div className="flex flex-col w-full pb-28 px-4 pt-3 space-y-4 animate-fadeIn">
+    <div className="flex flex-col w-full pb-36 px-4 pt-3 space-y-4 animate-fadeIn">
       {/* 1. Monthly Flow Summary Header */}
       <div className="grid grid-cols-2 gap-3">
         <div className="p-3.5 bg-green-50 rounded-2xl border border-green-200">

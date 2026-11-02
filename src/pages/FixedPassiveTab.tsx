@@ -27,7 +27,7 @@ export const FixedPassiveTab: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col w-full pb-28 px-4 pt-3 space-y-4 animate-fadeIn">
+    <div className="flex flex-col w-full pb-36 px-4 pt-3 space-y-4 animate-fadeIn">
       {/* 1. Financial Freedom Index Card */}
       <div className="bg-gradient-to-br from-tertiary-container to-tertiary text-white p-5 rounded-3xl shadow-md space-y-3">
         <div className="flex items-center justify-between">

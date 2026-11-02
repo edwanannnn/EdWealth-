@@ -62,21 +62,19 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.1
-          name: "EdWealth v1.0.1 (Official Android APK)"
+          tag_name: v1.0.2
+          name: "EdWealth v1.0.2 (Official Android APK)"
           body: |
-            ### 📱 EdWealth Android App v1.0.1
+            ### 📱 EdWealth Android App v1.0.2
             
             Download the official Android APK directly below to install on your phone:
-            - **Direct Download:** [EdWealth.apk](https://github.com/edwanannnn/EdWealth-/releases/download/v1.0.1/EdWealth.apk)
+            - **Direct Download:** [EdWealth.apk](https://github.com/edwanannnn/EdWealth-/releases/download/v1.0.2/EdWealth.apk)
             
             #### Highlights & Fixes:
-            - 📱 **Smooth Touch Scrolling:** Fixed vertical touch drag & scrolling for Android devices.
+            - 🎙️ **Manual Mic Trigger:** Voice logger now only activates when you explicitly tap the mic button (no auto-listening surprise).
+            - 🧭 **Android 3-Button Navigation Bar Fix:** Added `fitsSystemWindows` and elevated bottom nav bar so it never collides with Android's Back, Home, and Recents system buttons.
+            - 📱 **Smooth Touch Scrolling:** Native vertical touch drag & scrolling for Android devices.
             - 💰 **Clean 0 Initial Balance:** New accounts start clean at Rp 0 with easy "Kelola Saldo" manager.
             - 💵 **Dedicated Income & Passive Incomes:** Quick actions for "+ Pemasukan" and "+ Tambah Sumber Pasif".
-            - 🎙️ Smart AI Voice Expense Logger (0 External API Key)
             - 📈 Real-Time IDX Stock Portfolio (Yahoo Finance live feed)
-            - ⚖️ Automated Broker Fee & Realized P/L Engine
-            - 🎯 Financial Freedom Index Coverage Gauge
-            - 🔒 Supabase PostgreSQL + Row Level Security
           files: EdWealth.apk

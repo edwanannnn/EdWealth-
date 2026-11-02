@@ -5,7 +5,7 @@ export const BottomNav: React.FC = () => {
   const { activeTab, setActiveTab, setIsVoiceModalOpen } = useApp();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-surface/90 backdrop-blur-xl border-t border-outline-variant/30 pb-safe shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-xl border-t border-outline-variant/30 pb-3 sm:pb-1 shadow-[0_-4px_16px_rgba(0,0,0,0.04)]">
       <div className="h-16 max-w-lg mx-auto px-4 flex items-center justify-between relative">
         {/* Tab 1: Beranda */}
         <button

@@ -17,7 +17,7 @@ export const PortfolioTab: React.FC = () => {
   const totalInvested = portfolio.reduce((sum, item) => sum + (item.lots * 100 * item.avg_price), 0);
 
   return (
-    <div className="flex flex-col w-full pb-28 px-4 pt-3 space-y-4 animate-fadeIn">
+    <div className="flex flex-col w-full pb-36 px-4 pt-3 space-y-4 animate-fadeIn">
       {/* 1. Portfolio Value & PnL Summary Banner */}
       <div className="bg-gradient-to-br from-surface-container-highest to-surface-container p-4 rounded-3xl shadow-sm border border-outline-variant/30 space-y-3">
         <div className="flex items-center justify-between">

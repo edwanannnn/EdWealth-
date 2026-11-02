@@ -23,7 +23,7 @@ export const VoiceModal: React.FC = () => {
   const recognitionRef = useRef<any>(null);
   const timerRef = useRef<any>(null);
 
-  // Start speech recognition when modal opens
+  // Reset state when modal opens/closes without auto-starting
   useEffect(() => {
     if (!isVoiceModalOpen) {
       stopListening();
@@ -34,36 +34,37 @@ export const VoiceModal: React.FC = () => {
       return;
     }
 
-    // Initialize Web Speech API
+    // Check Web Speech API support
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      setSpeechSupported(false);
-      // Fallback demo sample so user can still test entity extraction
-      const sample = 'Beli nasi padang 25 ribu pakai QRIS SeaBank barusan';
-      setTranscript(sample);
-      const parsed = parseVoiceTransaction(sample);
-      setParsedResult(parsed);
-      setCustomAmount(parsed.amount);
-      setCustomTitle(parsed.title);
-      setCustomCategory(parsed.category);
-      const matchAcc = cashAccounts.find(a => a.account_name.toLowerCase().includes(parsed.accountKeyword.toLowerCase())) || cashAccounts[0];
-      setCustomAccountId(matchAcc?.id || '');
-      return;
-    }
+    setSpeechSupported(!!SpeechRecognition);
 
-    setSpeechSupported(true);
-    startListening();
+    // Initial default account selection
+    if (cashAccounts.length > 0 && !customAccountId) {
+      setCustomAccountId(cashAccounts[0].id);
+    }
 
     return () => {
       stopListening();
     };
-  }, [isVoiceModalOpen]);
+  }, [isVoiceModalOpen, cashAccounts]);
 
   const startListening = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
+    if (!SpeechRecognition) {
+      setSpeechSupported(false);
+      // Demo sample fallback
+      const sample = 'Beli nasi padang 25 ribu pakai QRIS SeaBank barusan';
+      setTranscript(sample);
+      const parsed = parseVoiceTransaction(sample);
+      applyParsedResult(parsed);
+      return;
+    }
 
     try {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.abort(); } catch {}
+      }
+
       const recognition = new SpeechRecognition();
       recognition.lang = 'id-ID';
       recognition.continuous = false;
@@ -87,17 +88,12 @@ export const VoiceModal: React.FC = () => {
         // Realtime parse
         if (currentText.trim().length > 3) {
           const parsed = parseVoiceTransaction(currentText);
-          setParsedResult(parsed);
-          setCustomAmount(parsed.amount);
-          setCustomTitle(parsed.title);
-          setCustomCategory(parsed.category);
-          const matchAcc = cashAccounts.find(a => a.account_name.toLowerCase().includes(parsed.accountKeyword.toLowerCase())) || cashAccounts[0];
-          setCustomAccountId(matchAcc?.id || '');
+          applyParsedResult(parsed);
         }
       };
 
       recognition.onerror = (e: any) => {
-        console.warn('Speech recognition error:', e.error);
+        console.warn('Speech recognition status/error:', e.error);
         stopListening();
       };
 
@@ -127,21 +123,39 @@ export const VoiceModal: React.FC = () => {
     }
   };
 
+  const toggleListening = () => {
+    if (isListening) {
+      stopListening();
+    } else {
+      startListening();
+    }
+  };
+
+  const applyParsedResult = (parsed: ParsedVoiceResult) => {
+    setParsedResult(parsed);
+    setCustomAmount(parsed.amount);
+    setCustomTitle(parsed.title);
+    setCustomCategory(parsed.category);
+    const matchAcc = cashAccounts.find(a => a.account_name.toLowerCase().includes(parsed.accountKeyword.toLowerCase())) || cashAccounts[0];
+    setCustomAccountId(matchAcc?.id || '');
+  };
+
   const handleRetry = () => {
+    stopListening();
     setTranscript('');
     setParsedResult(null);
-    setIsSaved(false);
+    setRecordingSeconds(0);
     startListening();
   };
 
   const handleConfirmSave = () => {
-    if (!parsedResult && customAmount <= 0) return;
-
-    const finalAmount = customAmount || parsedResult?.amount || 25000;
-    const finalTitle = customTitle || parsedResult?.title || 'Transaksi Suara';
-    const finalCategory = customCategory || parsedResult?.category || 'Makanan';
+    const finalAmount = customAmount || parsedResult?.amount || 0;
+    const finalTitle = customTitle || parsedResult?.title || 'Pengeluaran Suara AI';
+    const finalCategory = customCategory || parsedResult?.category || 'Lain-lain';
+    const finalAccountId = customAccountId || cashAccounts[0]?.id || '';
     const finalType = parsedResult?.type || 'EXPENSE';
-    const finalAccountId = customAccountId || cashAccounts[0]?.id;
+
+    if (finalAmount <= 0) return;
 
     addTransaction({
       account_id: finalAccountId,
@@ -173,7 +187,7 @@ export const VoiceModal: React.FC = () => {
         <div className="flex items-center justify-between pb-3 border-b border-outline-variant/30">
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-primary text-[24px]">mic</span>
-            <h2 className="text-lg font-bold text-on-surface">Voice AI Logger</h2>
+            <h2 className="text-lg font-bold text-on-surface">Voice AI Smart Logger</h2>
           </div>
           <button 
             onClick={() => setIsVoiceModalOpen(false)}
@@ -184,15 +198,14 @@ export const VoiceModal: React.FC = () => {
         </div>
 
         {/* State Pill Bar */}
-        <div className="flex items-center justify-between py-3">
+        <div className="flex items-center justify-between py-2">
           <div className="flex items-center gap-2 bg-surface-container px-3 py-1.5 rounded-full shadow-sm">
             <span className={`inline-block w-2.5 h-2.5 rounded-full ${isListening ? 'bg-error animate-ping' : 'bg-primary'}`}></span>
             <span className="text-xs font-semibold text-on-surface">
-              {isListening ? `Mendengarkan... [00:0${recordingSeconds}]` : 'Selesai Mendengar'}
+              {isListening ? `Mendengarkan... [00:0${recordingSeconds}]` : parsedResult ? 'Selesai Merekam' : 'Siap Merekam'}
             </span>
           </div>
 
-          {/* Mode Otomatis Switch */}
           <div className="flex items-center gap-2 bg-surface-container-low px-3 py-1 rounded-full">
             <span className="text-xs font-medium text-on-surface-variant">Mode Otomatis</span>
             <button 
@@ -204,66 +217,74 @@ export const VoiceModal: React.FC = () => {
           </div>
         </div>
 
-        {/* AI Assistant Greeting Hero Card */}
-        <div className="relative overflow-hidden rounded-2xl bg-surface-container-lowest p-3.5 shadow-sm border border-outline-variant/20 mb-3.5">
-          <div className="flex items-center gap-3">
-            <div className="relative flex-shrink-0">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold shadow-inner">
-                <span className="material-symbols-outlined text-[26px]">smart_toy</span>
-              </div>
-              <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-tertiary-container rounded-full flex items-center justify-center text-white text-[10px]">
-                <span className="material-symbols-outlined text-[10px]">mic</span>
+        {/* Interactive Big Microphone Button (User explicitly presses to trigger recording) */}
+        <div className="flex flex-col items-center justify-center my-3 py-2">
+          <div className="relative">
+            {isListening && (
+              <>
+                <div className="absolute -inset-2 rounded-full bg-error/25 animate-ping pointer-events-none"></div>
+                <div className="absolute -inset-4 rounded-full bg-error/15 animate-pulse pointer-events-none"></div>
+              </>
+            )}
+
+            <button
+              type="button"
+              onClick={toggleListening}
+              className={`relative z-10 w-24 h-24 rounded-full flex flex-col items-center justify-center shadow-xl active:scale-95 transition-all duration-200 cursor-pointer ${
+                isListening
+                  ? 'bg-gradient-to-tr from-error to-red-400 text-white shadow-error/40 scale-105 ring-4 ring-error/30'
+                  : 'bg-gradient-to-tr from-primary to-primary-container text-white shadow-primary/30 hover:scale-105 ring-4 ring-primary/20'
+              }`}
+            >
+              <span className={`material-symbols-outlined text-[36px] ${isListening ? 'animate-pulse' : ''}`} style={{ fontVariationSettings: "'FILL' 1" }}>
+                {isListening ? 'stop' : 'mic'}
               </span>
-            </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-xs font-bold text-primary">FinAI Voice Assistant</span>
-              <p className="text-xs text-on-surface-variant line-clamp-2">
-                Contoh: <span className="font-semibold text-on-surface">“Beli nasi padang 25 ribu pakai QRIS SeaBank”</span>
-              </p>
-            </div>
+              <span className="text-[10px] font-extrabold mt-0.5 uppercase tracking-wider">
+                {isListening ? 'Berhenti' : 'Bicara'}
+              </span>
+            </button>
+          </div>
+
+          <div className="text-center mt-3">
+            <p className="text-xs font-bold text-on-surface">
+              {isListening 
+                ? 'Sedang mendengarkan... Ketuk tombol merah untuk selesai' 
+                : 'Ketuk tombol Mic di atas jika sudah siap bicara'}
+            </p>
+            <p className="text-[11px] text-outline mt-0.5">
+              Contoh: <span className="font-semibold text-primary">"Beli nasi padang 25 ribu pakai QRIS SeaBank"</span>
+            </p>
           </div>
         </div>
 
         {/* Real-time Waveform & Audio Transcription Bubble */}
-        <div className="rounded-2xl bg-inverse-surface p-4 shadow-xl text-inverse-on-surface flex flex-col items-center relative overflow-hidden mb-3.5">
+        <div className="rounded-2xl bg-inverse-surface p-3.5 shadow-xl text-inverse-on-surface flex flex-col items-center relative overflow-hidden mb-3">
           <div className="absolute inset-0 bg-gradient-to-t from-primary/20 via-tertiary-container/10 to-transparent pointer-events-none"></div>
           
-          {/* Active Listening Indicator */}
-          <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-white/10 backdrop-blur-md mb-2">
-            <span className="material-symbols-outlined text-tertiary-fixed-dim text-[14px] animate-pulse">graphic_eq</span>
-            <span className="text-[10px] font-bold text-tertiary-fixed tracking-wider uppercase">
-              {isListening ? 'AUDIO AKTIF • BAHASA INDONESIA' : 'TRANSKRIP TERCATAT'}
-            </span>
-          </div>
-
           {/* Animated Waveform Frequency Bars */}
-          <div className="flex items-center justify-center gap-1.5 h-12 w-full my-1">
-            {[16, 28, 44, 48, 36, 44, 24, 14].map((h, idx) => (
+          <div className="flex items-center justify-center gap-1.5 h-10 w-full my-0.5">
+            {[14, 26, 40, 44, 32, 40, 22, 12].map((h, idx) => (
               <span 
                 key={idx}
                 style={{ 
-                  height: isListening ? `${Math.max(8, (h + (Math.sin(recordingSeconds * 3 + idx) * 16)))}px` : '12px' 
+                  height: isListening ? `${Math.max(6, (h + (Math.sin(recordingSeconds * 3 + idx) * 14)))}px` : '8px' 
                 }}
-                className="w-1.5 bg-gradient-to-t from-tertiary-fixed to-primary-container rounded-full transition-all duration-200 shadow-[0_0_8px_rgba(76,215,246,0.5)]"
+                className="w-1.5 bg-gradient-to-t from-tertiary-fixed to-primary-container rounded-full transition-all duration-200"
               />
             ))}
           </div>
 
           {/* Live Transcribed Text Bubble */}
-          <div className="w-full bg-white/10 backdrop-blur-md rounded-xl p-3 text-center mt-1">
-            <p className="text-sm text-inverse-on-surface font-medium leading-relaxed italic">
-              {transcript ? `“${transcript}”` : isListening ? "Mendengarkan suara Anda..." : "Silakan bicara atau ketik pengeluaran..."}
+          <div className="w-full bg-white/10 backdrop-blur-md rounded-xl p-2.5 text-center mt-1">
+            <p className="text-xs text-inverse-on-surface font-medium leading-relaxed italic">
+              {transcript ? `“${transcript}”` : isListening ? "Mendengarkan suara Anda..." : "Transkrip suara akan muncul di sini..."}
             </p>
-            <div className="flex items-center justify-center gap-1 mt-1.5 text-tertiary-fixed-dim text-[10px] font-medium">
-              <span className="material-symbols-outlined text-[12px]">done_all</span>
-              <span>Akurasi Suara 99.4% • 0 API Key (Privat & Cepat)</span>
-            </div>
           </div>
         </div>
 
         {/* Live AI Entity Extraction Card */}
         {parsedResult && (
-          <div className="rounded-2xl bg-surface-container-lowest p-3.5 shadow-sm border border-outline-variant/20 space-y-3 mb-4">
+          <div className="rounded-2xl bg-surface-container-lowest p-3.5 shadow-sm border border-outline-variant/20 space-y-3 mb-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed-variant text-xs font-semibold">
                 <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
@@ -273,15 +294,15 @@ export const VoiceModal: React.FC = () => {
             </div>
 
             {/* Nominal Display */}
-            <div className="bg-surface-container-low rounded-xl p-3 flex flex-col items-center justify-center text-center">
-              <span className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Total Transaksi</span>
+            <div className="bg-surface-container-low rounded-xl p-2.5 flex flex-col items-center justify-center text-center">
+              <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Total Transaksi</span>
               <div className="flex items-baseline gap-1 mt-0.5">
-                <span className={`text-base font-bold ${parsedResult.type === 'INCOME' ? 'text-green-600' : 'text-error'}`}>Rp</span>
+                <span className={`text-sm font-bold ${parsedResult.type === 'INCOME' ? 'text-green-600' : 'text-error'}`}>Rp</span>
                 <input
                   type="number"
                   value={customAmount}
                   onChange={(e) => setCustomAmount(Number(e.target.value))}
-                  className={`text-2xl font-extrabold text-center bg-transparent border-b border-dashed border-outline-variant focus:outline-none w-48 ${
+                  className={`text-xl font-extrabold text-center bg-transparent border-b border-dashed border-outline-variant focus:outline-none w-44 ${
                     parsedResult.type === 'INCOME' ? 'text-green-600' : 'text-error'
                   }`}
                 />
@@ -299,22 +320,22 @@ export const VoiceModal: React.FC = () => {
 
             {/* Structured Grid: Kategori & Akun Kas */}
             <div className="grid grid-cols-2 gap-2">
-              <div className="bg-surface-container-low rounded-xl p-2.5 flex flex-col">
+              <div className="bg-surface-container-low rounded-xl p-2 flex flex-col">
                 <span className="text-[10px] font-bold text-on-surface-variant uppercase">Kategori</span>
                 <input
                   type="text"
                   value={customCategory}
                   onChange={(e) => setCustomCategory(e.target.value)}
-                  className="mt-1 font-bold text-xs text-on-surface bg-transparent border-b border-outline-variant/30 focus:outline-none"
+                  className="mt-0.5 font-bold text-xs text-on-surface bg-transparent border-b border-outline-variant/30 focus:outline-none"
                 />
               </div>
 
-              <div className="bg-surface-container-low rounded-xl p-2.5 flex flex-col">
+              <div className="bg-surface-container-low rounded-xl p-2 flex flex-col">
                 <span className="text-[10px] font-bold text-on-surface-variant uppercase">Metode / Akun</span>
                 <select
                   value={customAccountId}
                   onChange={(e) => setCustomAccountId(e.target.value)}
-                  className="mt-1 font-bold text-xs text-on-surface bg-transparent border-b border-outline-variant/30 focus:outline-none"
+                  className="mt-0.5 font-bold text-xs text-on-surface bg-transparent border-b border-outline-variant/30 focus:outline-none"
                 >
                   {cashAccounts.map(acc => (
                     <option key={acc.id} value={acc.id}>{acc.account_name}</option>
@@ -324,8 +345,8 @@ export const VoiceModal: React.FC = () => {
             </div>
 
             {/* Catatan / Deskripsi */}
-            <div className="bg-surface-container-low rounded-xl p-2.5 flex items-center gap-2">
-              <span className="material-symbols-outlined text-outline text-[18px]">edit_note</span>
+            <div className="bg-surface-container-low rounded-xl p-2 flex items-center gap-2">
+              <span className="material-symbols-outlined text-outline text-[16px]">edit_note</span>
               <input
                 type="text"
                 value={customTitle}
@@ -338,17 +359,17 @@ export const VoiceModal: React.FC = () => {
         )}
 
         {/* Bottom CTA Actions */}
-        <div className="space-y-2 mt-auto pt-2">
+        <div className="space-y-2 mt-auto pt-1">
           <button
             onClick={handleConfirmSave}
             disabled={isSaved || (!parsedResult && customAmount <= 0)}
-            className={`w-full py-3.5 px-4 rounded-full font-bold text-sm shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all ${
+            className={`w-full py-3 px-4 rounded-full font-bold text-xs shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all ${
               isSaved 
                 ? 'bg-green-600 text-white' 
                 : 'bg-primary text-white hover:bg-primary-container shadow-primary/20'
             }`}
           >
-            <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+            <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>
               {isSaved ? 'check_circle' : 'task_alt'}
             </span>
             <span>{isSaved ? 'Tersimpan ke Buku Kas!' : 'Konfirmasi & Simpan Transaksi'}</span>
@@ -357,28 +378,25 @@ export const VoiceModal: React.FC = () => {
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={handleRetry}
-              className="py-2.5 px-3 rounded-full bg-surface-container text-primary font-bold text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+              className="py-2 px-3 rounded-full bg-surface-container text-primary font-bold text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all"
             >
-              <span className="material-symbols-outlined text-[16px]">replay</span>
+              <span className="material-symbols-outlined text-[15px]">replay</span>
               <span>Ulangi Rekaman</span>
             </button>
 
             <button
               onClick={() => {
-                // If user clicks edit manual, they can edit fields in the preview above
                 if (!parsedResult) {
-                  setTranscript('Beli makan 25000');
-                  const parsed = parseVoiceTransaction('Beli makan 25000');
-                  setParsedResult(parsed);
-                  setCustomAmount(25000);
-                  setCustomTitle('Beli Makanan');
-                  setCustomCategory('Makanan');
+                  const sample = 'Beli nasi padang 25000';
+                  setTranscript(sample);
+                  const parsed = parseVoiceTransaction(sample);
+                  applyParsedResult(parsed);
                 }
               }}
-              className="py-2.5 px-3 rounded-full bg-surface-container text-on-surface font-bold text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+              className="py-2 px-3 rounded-full bg-surface-container text-on-surface font-bold text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all"
             >
-              <span className="material-symbols-outlined text-[16px]">edit</span>
-              <span>Edit Manual</span>
+              <span className="material-symbols-outlined text-[15px]">edit</span>
+              <span>Coba Sampel</span>
             </button>
           </div>
         </div>

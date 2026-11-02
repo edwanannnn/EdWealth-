@@ -19,7 +19,7 @@ export const DashboardTab: React.FC = () => {
   const recentTransactions = transactions.slice(0, 5);
 
   return (
-    <div className="flex flex-col w-full pb-28 animate-fadeIn">
+    <div className="flex flex-col w-full pb-36 animate-fadeIn">
       {/* 1. Dynamic Blue Hero Header Section */}
       <div className="relative bg-primary text-on-primary px-4 pt-4 pb-10 rounded-b-3xl shadow-md overflow-hidden">
         {/* Ambient Glows */}
