@@ -16,6 +16,12 @@
   <img src="https://img.shields.io/badge/Market%20Data-Yahoo%20Finance%20(BEI)-720E9E?style=for-the-badge&logo=yahoo" alt="Yahoo Finance" />
 </p>
 
+<p align="center">
+  <a href="https://github.com/edwanannnn/EdWealth-/releases/latest">
+    <img src="https://img.shields.io/badge/Download-Android%20APK%20(Direct)-success?style=for-the-badge&logo=android&logoColor=white" alt="Download APK" />
+  </a>
+</p>
+
 ---
 
 ## 🌟 Highlights & Core Philosophy

@@ -22,3 +22,6 @@ android/app/release/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Internal design drafts
+stitch_voice_activated_money_tracker/

@@ -1,5 +1,5 @@
 name: Build Android APK
-run-name: "Build EdWealth Android APK"
+run-name: "Build & Release EdWealth Android APK"
 
 on:
   push:
@@ -7,6 +7,9 @@ on:
   pull_request:
     branches: [ main, master ]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -45,8 +48,32 @@ jobs:
         working-directory: ./android
         run: ./gradlew assembleDebug --no-daemon --stacktrace
 
+      - name: Prepare Named APK File
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk EdWealth.apk
+
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: EdWealth-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: EdWealth.apk
+
+      - name: Publish GitHub Release with Direct APK Download
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          tag_name: v1.0.0
+          name: "EdWealth v1.0.0 (Official Android APK)"
+          body: |
+            ### 📱 EdWealth Android App v1.0.0
+            
+            Download the official Android APK directly below to install on your phone:
+            - **Direct Download:** [EdWealth.apk](https://github.com/edwanannnn/EdWealth-/releases/download/v1.0.0/EdWealth.apk)
+            
+            #### Highlights:
+            - 🎙️ Smart AI Voice Expense Logger (0 External API Key)
+            - 📈 Real-Time IDX Stock Portfolio (Yahoo Finance live feed)
+            - ⚖️ Automated Broker Fee & Realized P/L Engine
+            - 🎯 Financial Freedom Index Coverage Gauge
+            - 🔒 Supabase PostgreSQL + Row Level Security
+          files: EdWealth.apk
