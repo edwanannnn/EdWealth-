@@ -62,19 +62,19 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.2
-          name: "EdWealth v1.0.2 (Official Android APK)"
+          tag_name: v1.0.3
+          name: "EdWealth v1.0.3 (Official Android APK - Clean Zero Slate)"
           body: |
-            ### 📱 EdWealth Android App v1.0.2
+            ### 📱 EdWealth Android App v1.0.3
             
             Download the official Android APK directly below to install on your phone:
-            - **Direct Download:** [EdWealth.apk](https://github.com/edwanannnn/EdWealth-/releases/download/v1.0.2/EdWealth.apk)
+            - **Direct Download:** [EdWealth.apk](https://github.com/edwanannnn/EdWealth-/releases/download/v1.0.3/EdWealth.apk)
             
-            #### Highlights & Fixes:
-            - 🎙️ **Manual Mic Trigger:** Voice logger now only activates when you explicitly tap the mic button (no auto-listening surprise).
-            - 🧭 **Android 3-Button Navigation Bar Fix:** Added `fitsSystemWindows` and elevated bottom nav bar so it never collides with Android's Back, Home, and Recents system buttons.
-            - 📱 **Smooth Touch Scrolling:** Native vertical touch drag & scrolling for Android devices.
-            - 💰 **Clean 0 Initial Balance:** New accounts start clean at Rp 0 with easy "Kelola Saldo" manager.
+            #### Highlights & Clean Slate:
+            - 🧹 **Pure Zero Starting Balance:** All accounts (Demo and newly registered Supabase accounts) start clean at exactly Rp 0 with no dummy balances.
+            - 🎙️ **Manual Mic Trigger:** Voice logger activates only when you explicitly tap the mic button.
+            - 🧭 **Android 3-Button Navigation Bar Inset:** `fitsSystemWindows` and elevated bottom nav bar so it never collides with Android's Back, Home, and Recents system buttons.
+            - 📱 **Smooth Touch Scrolling:** Native vertical touch drag & scrolling.
             - 💵 **Dedicated Income & Passive Incomes:** Quick actions for "+ Pemasukan" and "+ Tambah Sumber Pasif".
             - 📈 Real-Time IDX Stock Portfolio (Yahoo Finance live feed)
           files: EdWealth.apk

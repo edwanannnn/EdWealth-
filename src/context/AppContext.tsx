@@ -22,167 +22,21 @@ const DEMO_PROFILE: Profile = {
 };
 
 const DEMO_ACCOUNTS: CashAccount[] = [
-  { id: 'acc-1', user_id: 'demo-user', account_name: 'BCA Utama', account_type: 'BANK', balance: 14850000 },
-  { id: 'acc-2', user_id: 'demo-user', account_name: 'RDN Stockbit', account_type: 'RDN', balance: 28500000 },
-  { id: 'acc-3', user_id: 'demo-user', account_name: 'SeaBank QRIS', account_type: 'E_WALLET', balance: 3200000 },
-  { id: 'acc-4', user_id: 'demo-user', account_name: 'Kas Dompet Tunai', account_type: 'CASH', balance: 650000 },
+  { id: 'acc-1', user_id: 'demo-user', account_name: 'BCA Utama', account_type: 'BANK', balance: 0 },
+  { id: 'acc-2', user_id: 'demo-user', account_name: 'RDN Stockbit', account_type: 'RDN', balance: 0 },
+  { id: 'acc-3', user_id: 'demo-user', account_name: 'SeaBank QRIS', account_type: 'E_WALLET', balance: 0 },
+  { id: 'acc-4', user_id: 'demo-user', account_name: 'Kas Dompet Tunai', account_type: 'CASH', balance: 0 },
 ];
 
-const DEMO_PORTFOLIO: StockPortfolioItem[] = [
-  {
-    id: 'port-1',
-    user_id: 'demo-user',
-    ticker: 'BBCA',
-    lots: 15,
-    avg_price: 9250,
-    company_name: 'Bank Central Asia Tbk',
-    sector: 'Financials',
-    target_take_profit: 11000,
-    target_cut_loss: 8500,
-  },
-  {
-    id: 'port-2',
-    user_id: 'demo-user',
-    ticker: 'BMRI',
-    lots: 25,
-    avg_price: 6100,
-    company_name: 'Bank Mandiri (Persero) Tbk',
-    sector: 'Financials',
-    target_take_profit: 7500,
-    target_cut_loss: 5800,
-  },
-  {
-    id: 'port-3',
-    user_id: 'demo-user',
-    ticker: 'AMMN',
-    lots: 10,
-    avg_price: 8800,
-    company_name: 'Amman Mineral Internasional Tbk',
-    sector: 'Basic Materials',
-    target_take_profit: 10500,
-    target_cut_loss: 8000,
-  },
-  {
-    id: 'port-4',
-    user_id: 'demo-user',
-    ticker: 'CUAN',
-    lots: 20,
-    avg_price: 6900,
-    company_name: 'Petrindo Jaya Kreasi Tbk',
-    sector: 'Energy',
-    target_take_profit: 9000,
-    target_cut_loss: 6200,
-  }
-];
+const DEMO_PORTFOLIO: StockPortfolioItem[] = [];
 
-const DEMO_TRANSACTIONS: Transaction[] = [
-  {
-    id: 'tx-1',
-    user_id: 'demo-user',
-    account_id: 'acc-3',
-    account_name: 'SeaBank QRIS',
-    title: 'Beli Nasi Padang & Es Teh',
-    amount: 25000,
-    type: 'EXPENSE',
-    category: 'Makanan',
-    transaction_date: new Date().toISOString().split('T')[0],
-  },
-  {
-    id: 'tx-2',
-    user_id: 'demo-user',
-    account_id: 'acc-1',
-    account_name: 'BCA Utama',
-    title: 'Gaji Bulanan & Tunjangan',
-    amount: 15000000,
-    type: 'INCOME',
-    category: 'Gaji',
-    transaction_date: new Date().toISOString().split('T')[0],
-  },
-  {
-    id: 'tx-3',
-    user_id: 'demo-user',
-    account_id: 'acc-1',
-    account_name: 'BCA Utama',
-    title: 'WiFi Indihome 50Mbps',
-    amount: 375000,
-    type: 'EXPENSE',
-    category: 'Tagihan Rutin',
-    is_fixed_expense: true,
-    due_date: 15,
-    is_paid: true,
-    transaction_date: new Date().toISOString().split('T')[0],
-  }
-];
+const DEMO_TRANSACTIONS: Transaction[] = [];
 
-const DEMO_FIXED_EXPENSES: Transaction[] = [
-  {
-    id: 'fix-1',
-    user_id: 'demo-user',
-    title: 'Sewa Apartemen / Kos',
-    amount: 2500000,
-    type: 'EXPENSE',
-    category: 'Tagihan Rutin',
-    is_fixed_expense: true,
-    due_date: 5,
-    is_paid: false,
-    transaction_date: new Date().toISOString().split('T')[0],
-  },
-  {
-    id: 'fix-2',
-    user_id: 'demo-user',
-    title: 'WiFi Indihome & TV',
-    amount: 375000,
-    type: 'EXPENSE',
-    category: 'Tagihan Rutin',
-    is_fixed_expense: true,
-    due_date: 15,
-    is_paid: true,
-    transaction_date: new Date().toISOString().split('T')[0],
-  },
-  {
-    id: 'fix-3',
-    user_id: 'demo-user',
-    title: 'BPJS Kesehatan & Asuransi',
-    amount: 450000,
-    type: 'EXPENSE',
-    category: 'Tagihan Rutin',
-    is_fixed_expense: true,
-    due_date: 10,
-    is_paid: false,
-    transaction_date: new Date().toISOString().split('T')[0],
-  }
-];
+const DEMO_FIXED_EXPENSES: Transaction[] = [];
 
-const DEMO_PASSIVE_INCOMES: PassiveIncome[] = [
-  {
-    id: 'pass-1',
-    user_id: 'demo-user',
-    source_name: 'Dividen Saham BBCA & BMRI (Est. Bulanan)',
-    amount: 1450000,
-    frequency: 'MONTHLY',
-    received_date: new Date().toISOString().split('T')[0],
-  },
-  {
-    id: 'pass-2',
-    user_id: 'demo-user',
-    source_name: 'Bunga Deposito Digital SeaBank (6% p.a)',
-    amount: 350000,
-    frequency: 'MONTHLY',
-    received_date: new Date().toISOString().split('T')[0],
-  }
-];
+const DEMO_PASSIVE_INCOMES: PassiveIncome[] = [];
 
-const DEMO_ALERTS: FinancialAlert[] = [
-  {
-    id: 'alt-1',
-    user_id: 'demo-user',
-    title: 'Jatuh Tempo Tagihan Kos (H-2)',
-    message: 'Tagihan Sewa Apartemen / Kos Rp 2.500.000 jatuh tempo pada tanggal 5.',
-    type: 'BILL_DUE',
-    is_read: false,
-    created_at: new Date().toISOString(),
-  }
-];
+const DEMO_ALERTS: FinancialAlert[] = [];
 
 interface AppContextType {
   user: User | null;
@@ -321,16 +175,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const loadDemoData = () => {
     setProfile(DEMO_PROFILE);
     setCashAccounts(DEMO_ACCOUNTS);
-    setTransactions(DEMO_TRANSACTIONS);
-    setFixedExpenses(DEMO_FIXED_EXPENSES);
-    setPortfolio(DEMO_PORTFOLIO);
-    setPassiveIncomes(DEMO_PASSIVE_INCOMES);
-    setAlerts(DEMO_ALERTS);
-
-    // Initial stock prices fetch
-    batchFetchStockPrices(DEMO_PORTFOLIO.map(p => p.ticker)).then(prices => {
-      setStockCache(prev => ({ ...prev, ...prices }));
-    });
+    setTransactions([]);
+    setFixedExpenses([]);
+    setPortfolio([]);
+    setPassiveIncomes([]);
+    setAlerts([]);
+    setStockCache({});
   };
 
   const loadUserDataFromSupabase = async (activeUser: User) => {
@@ -366,7 +216,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         .select('*')
         .eq('user_id', activeUser.id);
 
+      // 3. Fetch Transactions
+      const { data: txData } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', activeUser.id)
+        .order('transaction_date', { ascending: false });
+
+      const txList = txData || [];
+      setTransactions(txList);
+
       if (accountsData && accountsData.length > 0) {
+        // Anti-Phantom Safeguard: If new user (0 transactions) has any dummy balances > 0, auto-reset to 0!
+        if (txList.length === 0 && accountsData.some(a => Number(a.balance) > 0)) {
+          for (const acc of accountsData) {
+            if (Number(acc.balance) > 0) {
+              await supabase.from('cash_accounts').update({ balance: 0 }).eq('id', acc.id);
+              acc.balance = 0;
+            }
+          }
+        }
         setCashAccounts(accountsData);
       } else {
         // If SQL trigger hasn't fired or fresh, create initial clean accounts with 0 balance
@@ -376,19 +245,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           { id: 'acc-' + Date.now() + '-3', user_id: activeUser.id, account_name: 'Kas Dompet Tunai', account_type: 'CASH', balance: 0 },
         ];
         setCashAccounts(initialAccounts);
-      }
-
-      // 3. Fetch Transactions
-      const { data: txData } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('user_id', activeUser.id)
-        .order('transaction_date', { ascending: false });
-
-      if (txData) {
-        setTransactions(txData);
-      } else {
-        setTransactions([]);
+        for (const acc of initialAccounts) {
+          try {
+            await supabase.from('cash_accounts').insert({
+              id: acc.id,
+              user_id: activeUser.id,
+              account_name: acc.account_name,
+              account_type: acc.account_type,
+              balance: 0,
+            });
+          } catch {}
+        }
       }
 
       // 4. Fetch Portfolio
