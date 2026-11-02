@@ -7,7 +7,8 @@ export const DashboardTab: React.FC = () => {
     totalFloatingGainLoss, financialFreedomRatio,
     isIncognito, toggleIncognito,
     transactions, setActiveTab,
-    setIsAddTxModalOpen, setIsBuyStockModalOpen, setIsReportModalOpen, setIsVoiceModalOpen
+    setIsAddTxModalOpen, setAddTxDefaultType, setIsBuyStockModalOpen, setIsReportModalOpen, setIsVoiceModalOpen,
+    setIsManageAccountsModalOpen
   } = useApp();
 
   const formatMoney = (val: number) => {
@@ -85,16 +86,24 @@ export const DashboardTab: React.FC = () => {
         {/* 2. Breakdown Cards: Kas Likuid & Portofolio Saham */}
         <div className="grid grid-cols-2 gap-3">
           {/* Kas & RDN */}
-          <div className="bg-surface-container-lowest p-3.5 rounded-2xl shadow-sm border border-outline-variant/20 flex flex-col justify-between">
-            <div className="flex items-center gap-2 text-outline mb-1">
-              <span className="material-symbols-outlined text-[18px] text-primary">account_balance</span>
-              <span className="text-[11px] font-bold uppercase">Kas & RDN</span>
+          <div 
+            onClick={() => setIsManageAccountsModalOpen(true)}
+            className="bg-surface-container-lowest p-3.5 rounded-2xl shadow-sm border border-outline-variant/20 flex flex-col justify-between cursor-pointer active:scale-95 transition-transform"
+          >
+            <div className="flex items-center justify-between text-outline mb-1">
+              <div className="flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[18px] text-primary">account_balance</span>
+                <span className="text-[11px] font-bold uppercase">Kas & RDN</span>
+              </div>
+              <span className="text-[10px] text-primary font-bold flex items-center">
+                Atur Saldo <span className="material-symbols-outlined text-[13px]">chevron_right</span>
+              </span>
             </div>
             <div>
               <span className="text-base font-extrabold text-on-surface">
                 {formatMoney(totalCashBalance)}
               </span>
-              <span className="text-[10px] text-outline block mt-0.5">Saldo Siap Pakai</span>
+              <span className="text-[10px] text-outline block mt-0.5">Ketuk untuk ubah / cek saldo</span>
             </div>
           </div>
 
@@ -155,47 +164,79 @@ export const DashboardTab: React.FC = () => {
         {/* 4. Quick Actions Shortcut Grid */}
         <div>
           <span className="text-xs font-bold text-outline uppercase tracking-wider block mb-2 px-1">
-            Menu Tindakan Cepat
+            Menu Pencatatan Cepat
           </span>
           <div className="grid grid-cols-4 gap-2">
+            {/* Suara AI */}
             <button
               onClick={() => setIsVoiceModalOpen(true)}
-              className="p-3 bg-surface-container-lowest rounded-2xl border border-outline-variant/20 flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-transform shadow-sm"
+              className="p-3 bg-surface-container-lowest rounded-2xl border border-primary/30 flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-transform shadow-sm"
             >
               <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                <span className="material-symbols-outlined text-[20px]">mic</span>
+                <span className="material-symbols-outlined text-[22px]">mic</span>
               </div>
               <span className="text-[10px] font-bold text-on-surface text-center">Suara AI</span>
             </button>
 
+            {/* + Pemasukan */}
+            <button
+              onClick={() => {
+                setAddTxDefaultType('INCOME');
+                setIsAddTxModalOpen(true);
+              }}
+              className="p-3 bg-surface-container-lowest rounded-2xl border border-green-500/30 flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-transform shadow-sm"
+            >
+              <div className="w-10 h-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center">
+                <span className="material-symbols-outlined text-[22px]">arrow_downward</span>
+              </div>
+              <span className="text-[10px] font-bold text-green-700 text-center">+ Pemasukan</span>
+            </button>
+
+            {/* - Belanja / Pengeluaran */}
+            <button
+              onClick={() => {
+                setAddTxDefaultType('EXPENSE');
+                setIsAddTxModalOpen(true);
+              }}
+              className="p-3 bg-surface-container-lowest rounded-2xl border border-red-500/30 flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-transform shadow-sm"
+            >
+              <div className="w-10 h-10 rounded-full bg-red-100 text-error flex items-center justify-center">
+                <span className="material-symbols-outlined text-[22px]">arrow_upward</span>
+              </div>
+              <span className="text-[10px] font-bold text-error text-center">- Belanja</span>
+            </button>
+
+            {/* Beli Saham */}
             <button
               onClick={() => setIsBuyStockModalOpen(true)}
               className="p-3 bg-surface-container-lowest rounded-2xl border border-outline-variant/20 flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-transform shadow-sm"
             >
-              <div className="w-10 h-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center">
-                <span className="material-symbols-outlined text-[20px]">add_chart</span>
+              <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center">
+                <span className="material-symbols-outlined text-[22px]">add_chart</span>
               </div>
               <span className="text-[10px] font-bold text-on-surface text-center">Beli Saham</span>
             </button>
+          </div>
 
+          {/* Secondary Quick Action Bar */}
+          <div className="grid grid-cols-2 gap-2 mt-2">
             <button
-              onClick={() => setIsAddTxModalOpen(true)}
-              className="p-3 bg-surface-container-lowest rounded-2xl border border-outline-variant/20 flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-transform shadow-sm"
+              onClick={() => {
+                setAddTxDefaultType('TRANSFER');
+                setIsAddTxModalOpen(true);
+              }}
+              className="py-2 px-3 bg-surface-container-lowest rounded-xl border border-outline-variant/20 flex items-center justify-center gap-1.5 active:scale-95 transition-transform text-xs font-bold text-on-surface shadow-xs"
             >
-              <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center">
-                <span className="material-symbols-outlined text-[20px]">sync_alt</span>
-              </div>
-              <span className="text-[10px] font-bold text-on-surface text-center">Transfer</span>
+              <span className="material-symbols-outlined text-blue-600 text-[16px]">sync_alt</span>
+              <span>Transfer Antar Akun</span>
             </button>
 
             <button
-              onClick={() => setIsReportModalOpen(true)}
-              className="p-3 bg-surface-container-lowest rounded-2xl border border-outline-variant/20 flex flex-col items-center justify-center gap-1.5 active:scale-95 transition-transform shadow-sm"
+              onClick={() => setIsManageAccountsModalOpen(true)}
+              className="py-2 px-3 bg-surface-container-lowest rounded-xl border border-outline-variant/20 flex items-center justify-center gap-1.5 active:scale-95 transition-transform text-xs font-bold text-on-surface shadow-xs"
             >
-              <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center">
-                <span className="material-symbols-outlined text-[20px]">download</span>
-              </div>
-              <span className="text-[10px] font-bold text-on-surface text-center">Laporan</span>
+              <span className="material-symbols-outlined text-primary text-[16px]">account_balance_wallet</span>
+              <span>Kelola Saldo Rekening</span>
             </button>
           </div>
         </div>

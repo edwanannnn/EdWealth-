@@ -4,7 +4,8 @@ import { useApp } from '../context/AppContext';
 export const FixedPassiveTab: React.FC = () => {
   const { 
     fixedExpenses, passiveIncomes, financialFreedomRatio,
-    markFixedExpensePaid, cashAccounts, isIncognito
+    markFixedExpensePaid, cashAccounts, isIncognito,
+    setIsAddPassiveModalOpen, setIsAddFixedModalOpen
   } = useApp();
 
   const [payingExpenseId, setPayingExpenseId] = useState<string | null>(null);
@@ -70,57 +71,69 @@ export const FixedPassiveTab: React.FC = () => {
             <h3 className="text-xs font-bold text-outline uppercase tracking-wider">
               Tagihan & Beban Pasti (Fixed Expenses)
             </h3>
-            <span className="text-[11px] text-outline">Centang untuk bayar otomatis & potong saldo</span>
+            <span className="text-[11px] text-outline">Total: {formatMoney(totalFixed)} • Potong saldo otomatis</span>
           </div>
-          <span className="text-xs font-extrabold text-error">{formatMoney(totalFixed)}</span>
+          <button
+            onClick={() => setIsAddFixedModalOpen(true)}
+            className="flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary hover:bg-primary/20 text-xs font-bold active:scale-95 transition-all shadow-xs"
+          >
+            <span className="material-symbols-outlined text-[15px]">add</span>
+            <span>+ Tagihan</span>
+          </button>
         </div>
 
         <div className="space-y-2.5">
-          {fixedExpenses.map(item => (
-            <div 
-              key={item.id}
-              className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between ${
-                item.is_paid 
-                  ? 'bg-surface-container-low border-outline-variant/20 opacity-75' 
-                  : 'bg-surface-container-lowest border-outline-variant/30 shadow-sm'
-              }`}
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                {/* Checkbox Bayar */}
-                <button
-                  onClick={() => {
-                    if (!item.is_paid) {
-                      setPayingExpenseId(item.id);
-                    }
-                  }}
-                  className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${
-                    item.is_paid 
-                      ? 'bg-green-600 text-white shadow-sm' 
-                      : 'border-2 border-outline hover:border-primary'
-                  }`}
-                >
-                  {item.is_paid && <span className="material-symbols-outlined text-[16px]">check</span>}
-                </button>
+          {fixedExpenses.length === 0 ? (
+            <div className="p-4 text-center text-outline text-xs bg-surface-container-low rounded-2xl">
+              Belum ada tagihan rutin bulanan. Ketuk "+ Tagihan" untuk menambahkan.
+            </div>
+          ) : (
+            fixedExpenses.map(item => (
+              <div 
+                key={item.id}
+                className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between ${
+                  item.is_paid 
+                    ? 'bg-surface-container-low border-outline-variant/20 opacity-75' 
+                    : 'bg-surface-container-lowest border-outline-variant/30 shadow-sm'
+                }`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  {/* Checkbox Bayar */}
+                  <button
+                    onClick={() => {
+                      if (!item.is_paid) {
+                        setPayingExpenseId(item.id);
+                      }
+                    }}
+                    className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${
+                      item.is_paid 
+                        ? 'bg-green-600 text-white shadow-sm' 
+                        : 'border-2 border-outline hover:border-primary'
+                    }`}
+                  >
+                    {item.is_paid && <span className="material-symbols-outlined text-[16px]">check</span>}
+                  </button>
 
-                <div className="min-w-0">
-                  <h4 className={`text-xs font-bold truncate ${item.is_paid ? 'line-through text-outline' : 'text-on-surface'}`}>
-                    {item.title}
-                  </h4>
-                  <div className="flex items-center gap-2 text-[10px] text-outline mt-0.5">
-                    <span>Jatuh Tempo: Tgl {item.due_date || 1}</span>
-                    <span>•</span>
-                    <span className={item.is_paid ? 'text-green-700 font-bold' : 'text-amber-700 font-bold'}>
-                      {item.is_paid ? 'Lunas Bulan Ini' : 'Belum Dibayar'}
-                    </span>
+                  <div className="min-w-0">
+                    <h4 className={`text-xs font-bold truncate ${item.is_paid ? 'line-through text-outline' : 'text-on-surface'}`}>
+                      {item.title}
+                    </h4>
+                    <div className="flex items-center gap-2 text-[10px] text-outline mt-0.5">
+                      <span>Jatuh Tempo: Tgl {item.due_date || 1}</span>
+                      <span>•</span>
+                      <span className={item.is_paid ? 'text-green-700 font-bold' : 'text-amber-700 font-bold'}>
+                        {item.is_paid ? 'Lunas Bulan Ini' : 'Belum Dibayar'}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <span className={`text-xs font-extrabold ${item.is_paid ? 'text-outline line-through' : 'text-on-surface'}`}>
-                {formatMoney(item.amount)}
-              </span>
-            </div>
-          ))}
+                <span className={`text-xs font-extrabold ${item.is_paid ? 'text-outline line-through' : 'text-on-surface'}`}>
+                  {formatMoney(item.amount)}
+                </span>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -131,34 +144,46 @@ export const FixedPassiveTab: React.FC = () => {
             <h3 className="text-xs font-bold text-outline uppercase tracking-wider">
               Sumber Pendapatan Pasif (Passive Income)
             </h3>
-            <span className="text-[11px] text-outline">Dividen saham, kupon SBN, dan bunga deposito</span>
+            <span className="text-[11px] text-outline">Total: {formatMoney(totalPassive)} • Dividen, kupon, bunga</span>
           </div>
-          <span className="text-xs font-extrabold text-green-700">{formatMoney(totalPassive)}</span>
+          <button
+            onClick={() => setIsAddPassiveModalOpen(true)}
+            className="flex items-center gap-1 px-3 py-1 rounded-full bg-green-100 text-green-800 hover:bg-green-200 text-xs font-bold active:scale-95 transition-all shadow-xs"
+          >
+            <span className="material-symbols-outlined text-[15px]">add</span>
+            <span>+ Sumber Pasif</span>
+          </button>
         </div>
 
         <div className="space-y-2.5">
-          {passiveIncomes.map(item => (
-            <div 
-              key={item.id}
-              className="p-3.5 bg-surface-container-lowest rounded-2xl border border-outline-variant/20 shadow-sm flex items-center justify-between"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-xl bg-green-100 text-green-700 flex items-center justify-center flex-shrink-0">
-                  <span className="material-symbols-outlined text-[20px]">payments</span>
-                </div>
-                <div className="min-w-0">
-                  <h4 className="text-xs font-bold text-on-surface truncate">{item.source_name}</h4>
-                  <span className="text-[10px] text-outline uppercase font-semibold">
-                    Frekuensi: {item.frequency}
-                  </span>
-                </div>
-              </div>
-
-              <span className="text-xs font-extrabold text-green-700">
-                +{formatMoney(item.amount)}
-              </span>
+          {passiveIncomes.length === 0 ? (
+            <div className="p-4 text-center text-outline text-xs bg-surface-container-low rounded-2xl">
+              Belum ada sumber pasif. Ketuk "+ Sumber Pasif" untuk mencatat dividen/bunga berkala.
             </div>
-          ))}
+          ) : (
+            passiveIncomes.map(item => (
+              <div 
+                key={item.id}
+                className="p-3.5 bg-surface-container-lowest rounded-2xl border border-outline-variant/20 shadow-sm flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-xl bg-green-100 text-green-700 flex items-center justify-center flex-shrink-0">
+                    <span className="material-symbols-outlined text-[20px]">payments</span>
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="text-xs font-bold text-on-surface truncate">{item.source_name}</h4>
+                    <span className="text-[10px] text-outline uppercase font-semibold">
+                      Frekuensi: {item.frequency}
+                    </span>
+                  </div>
+                </div>
+
+                <span className="text-xs font-extrabold text-green-700">
+                  +{formatMoney(item.amount)}
+                </span>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

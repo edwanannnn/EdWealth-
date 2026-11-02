@@ -206,13 +206,13 @@ begin
     10000000
   );
 
-  -- 2. Buat Rekening Kas Awal
+  -- 2. Buat Rekening Kas Awal (Saldo Bersih Rp 0 untuk Akun Baru)
   insert into public.cash_accounts (user_id, account_name, account_type, balance)
   values
-    (new.id, 'BCA Utama', 'BANK', 12500000),
-    (new.id, 'RDN Stockbit', 'RDN', 25000000),
-    (new.id, 'SeaBank QRIS', 'E_WALLET', 2500000),
-    (new.id, 'Kas Dompet Tunai', 'CASH', 750000);
+    (new.id, 'BCA Utama', 'BANK', 0),
+    (new.id, 'RDN Stockbit', 'RDN', 0),
+    (new.id, 'SeaBank QRIS', 'E_WALLET', 0),
+    (new.id, 'Kas Dompet Tunai', 'CASH', 0);
 
   -- 3. Buat Notifikasi Selamat Datang
   insert into public.financial_alerts (user_id, title, message, type)

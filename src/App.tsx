@@ -17,6 +17,9 @@ import { AddTransactionModal } from './components/AddTransactionModal';
 import { AlertsModal } from './components/AlertsModal';
 import { MonthlyReportModal } from './components/MonthlyReportModal';
 import { ProfileModal } from './components/ProfileModal';
+import { ManageAccountsModal } from './components/ManageAccountsModal';
+import { AddPassiveModal } from './components/AddPassiveModal';
+import { AddFixedExpenseModal } from './components/AddFixedExpenseModal';
 
 export const AppContent: React.FC = () => {
   const { 
@@ -37,7 +40,7 @@ export const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-surface text-on-surface flex flex-col font-sans max-w-lg mx-auto relative shadow-2xl overflow-x-hidden">
+    <div className="min-h-screen bg-surface text-on-surface flex flex-col font-sans max-w-lg mx-auto relative shadow-2xl">
       {/* Top Header */}
       <Header />
 
@@ -60,6 +63,9 @@ export const AppContent: React.FC = () => {
       <AddTransactionModal />
       <AlertsModal />
       <MonthlyReportModal />
+      <ManageAccountsModal />
+      <AddPassiveModal />
+      <AddFixedExpenseModal />
       <ProfileModal 
         isOpen={isProfileModalOpen} 
         onClose={() => setIsProfileModalOpen(false)} 

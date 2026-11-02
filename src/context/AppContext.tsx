@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { 
-  Profile, CashAccount, Transaction, StockPortfolioItem, 
+  Profile, CashAccount, Transaction, TransactionType, StockPortfolioItem, 
   StockMarketCache, PassiveIncome, FinancialAlert 
 } from '../types';
 import { supabase } from '../lib/supabase';
@@ -218,15 +218,27 @@ interface AppContextType {
   setIsAveragingModalOpen: (open: boolean) => void;
   isAddTxModalOpen: boolean;
   setIsAddTxModalOpen: (open: boolean) => void;
+  addTxDefaultType: TransactionType;
+  setAddTxDefaultType: (type: TransactionType) => void;
   isAlertsModalOpen: boolean;
   setIsAlertsModalOpen: (open: boolean) => void;
   isReportModalOpen: boolean;
   setIsReportModalOpen: (open: boolean) => void;
   isProfileModalOpen: boolean;
   setIsProfileModalOpen: (open: boolean) => void;
+  isManageAccountsModalOpen: boolean;
+  setIsManageAccountsModalOpen: (open: boolean) => void;
+  isAddPassiveModalOpen: boolean;
+  setIsAddPassiveModalOpen: (open: boolean) => void;
+  isAddFixedModalOpen: boolean;
+  setIsAddFixedModalOpen: (open: boolean) => void;
 
   // Actions
   addTransaction: (tx: Omit<Transaction, 'id' | 'user_id' | 'created_at'>) => void;
+  updateAccountBalance: (accountId: string, newBalance: number) => void;
+  addCashAccount: (account: { account_name: string; account_type: 'BANK' | 'RDN' | 'E_WALLET' | 'CASH'; balance: number }) => void;
+  addPassiveIncome: (item: { source_name: string; amount: number; frequency: 'MONTHLY' | 'QUARTERLY' | 'ANNUAL'; received_date?: string }) => void;
+  addFixedExpense: (item: { title: string; amount: number; due_date: number; category?: string }) => void;
   buyStock: (params: { ticker: string; companyName: string; lots: number; avgPrice: number; targetTp?: number; targetCl?: number; accountId?: string }) => void;
   sellStock: (params: { portfolioId: string; ticker: string; lotsToSell: number; sellPrice: number; accountId: string }) => void;
   markFixedExpensePaid: (fixedExpenseId: string, accountId: string) => void;
@@ -275,9 +287,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [selectedStockToSell, setSelectedStockToSell] = useState<StockPortfolioItem | null>(null);
   const [isAveragingModalOpen, setIsAveragingModalOpen] = useState(false);
   const [isAddTxModalOpen, setIsAddTxModalOpen] = useState(false);
+  const [addTxDefaultType, setAddTxDefaultType] = useState<TransactionType>('EXPENSE');
   const [isAlertsModalOpen, setIsAlertsModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isManageAccountsModalOpen, setIsManageAccountsModalOpen] = useState(false);
+  const [isAddPassiveModalOpen, setIsAddPassiveModalOpen] = useState(false);
+  const [isAddFixedModalOpen, setIsAddFixedModalOpen] = useState(false);
 
   // Monitor Supabase Auth
   useEffect(() => {
@@ -353,11 +369,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (accountsData && accountsData.length > 0) {
         setCashAccounts(accountsData);
       } else {
-        // If SQL trigger hasn't fired or fresh, create initial clean accounts
+        // If SQL trigger hasn't fired or fresh, create initial clean accounts with 0 balance
         const initialAccounts: CashAccount[] = [
-          { id: 'acc-' + Date.now() + '-1', user_id: activeUser.id, account_name: 'BCA Utama', account_type: 'BANK', balance: 5000000 },
-          { id: 'acc-' + Date.now() + '-2', user_id: activeUser.id, account_name: 'RDN Stockbit', account_type: 'RDN', balance: 10000000 },
-          { id: 'acc-' + Date.now() + '-3', user_id: activeUser.id, account_name: 'Kas Dompet Tunai', account_type: 'CASH', balance: 500000 },
+          { id: 'acc-' + Date.now() + '-1', user_id: activeUser.id, account_name: 'BCA Utama', account_type: 'BANK', balance: 0 },
+          { id: 'acc-' + Date.now() + '-2', user_id: activeUser.id, account_name: 'RDN Stockbit', account_type: 'RDN', balance: 0 },
+          { id: 'acc-' + Date.now() + '-3', user_id: activeUser.id, account_name: 'Kas Dompet Tunai', account_type: 'CASH', balance: 0 },
         ];
         setCashAccounts(initialAccounts);
       }
@@ -494,6 +510,104 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           transaction_date: txData.transaction_date,
         })
       ).catch(() => {});
+    }
+  };
+
+  // Update Account Balance (for starting balance adjustments or edits)
+  const updateAccountBalance = (accountId: string, newBalance: number) => {
+    const val = Number(newBalance) || 0;
+    setCashAccounts(prev => prev.map(acc => acc.id === accountId ? { ...acc, balance: val } : acc));
+    if (user) {
+      Promise.resolve(
+        supabase.from('cash_accounts').update({ balance: val }).eq('id', accountId)
+      ).catch(err => console.warn('Supabase update balance error:', err));
+    }
+  };
+
+  // Add New Cash/Bank/RDN/Wallet Account
+  const addCashAccount = (accountData: { account_name: string; account_type: 'BANK' | 'RDN' | 'E_WALLET' | 'CASH'; balance: number }) => {
+    const newId = 'acc-' + Date.now();
+    const currentUserId = user?.id || profile.id;
+    const newAcc: CashAccount = {
+      id: newId,
+      user_id: currentUserId,
+      account_name: accountData.account_name,
+      account_type: accountData.account_type,
+      balance: Number(accountData.balance) || 0,
+    };
+    setCashAccounts(prev => [...prev, newAcc]);
+    if (user) {
+      Promise.resolve(
+        supabase.from('cash_accounts').insert({
+          id: newId,
+          user_id: user.id,
+          account_name: newAcc.account_name,
+          account_type: newAcc.account_type,
+          balance: newAcc.balance,
+        })
+      ).catch(err => console.warn('Supabase insert account error:', err));
+    }
+  };
+
+  // Add Passive Income Source (Dividen, Deposito, SBN, Sewa Properti)
+  const addPassiveIncome = (item: { source_name: string; amount: number; frequency: 'MONTHLY' | 'QUARTERLY' | 'ANNUAL'; received_date?: string }) => {
+    const newId = 'pass-' + Date.now();
+    const currentUserId = user?.id || profile.id;
+    const newPassive: PassiveIncome = {
+      id: newId,
+      user_id: currentUserId,
+      source_name: item.source_name,
+      amount: Number(item.amount),
+      frequency: item.frequency,
+      received_date: item.received_date || new Date().toISOString().split('T')[0],
+    };
+    setPassiveIncomes(prev => [...prev, newPassive]);
+    if (user) {
+      Promise.resolve(
+        supabase.from('passive_incomes').insert({
+          id: newId,
+          user_id: user.id,
+          source_name: newPassive.source_name,
+          amount: newPassive.amount,
+          frequency: newPassive.frequency,
+          received_date: newPassive.received_date,
+        })
+      ).catch(err => console.warn('Supabase insert passive income error:', err));
+    }
+  };
+
+  // Add Fixed Recurring Expense (Tagihan Rutin)
+  const addFixedExpense = (item: { title: string; amount: number; due_date: number; category?: string }) => {
+    const newId = 'fix-' + Date.now();
+    const currentUserId = user?.id || profile.id;
+    const newFixed: Transaction = {
+      id: newId,
+      user_id: currentUserId,
+      title: item.title,
+      amount: Number(item.amount),
+      type: 'EXPENSE',
+      category: item.category || 'Tagihan Rutin',
+      is_fixed_expense: true,
+      due_date: Number(item.due_date),
+      is_paid: false,
+      transaction_date: new Date().toISOString().split('T')[0],
+    };
+    setFixedExpenses(prev => [...prev, newFixed]);
+    if (user) {
+      Promise.resolve(
+        supabase.from('transactions').insert({
+          id: newId,
+          user_id: user.id,
+          title: newFixed.title,
+          amount: newFixed.amount,
+          type: newFixed.type,
+          category: newFixed.category,
+          is_fixed_expense: true,
+          due_date: newFixed.due_date,
+          is_paid: false,
+          transaction_date: newFixed.transaction_date,
+        })
+      ).catch(err => console.warn('Supabase insert fixed expense error:', err));
     }
   };
 
@@ -741,14 +855,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setIsAveragingModalOpen,
       isAddTxModalOpen,
       setIsAddTxModalOpen,
+      addTxDefaultType,
+      setAddTxDefaultType,
       isAlertsModalOpen,
       setIsAlertsModalOpen,
       isReportModalOpen,
       setIsReportModalOpen,
       isProfileModalOpen,
       setIsProfileModalOpen,
+      isManageAccountsModalOpen,
+      setIsManageAccountsModalOpen,
+      isAddPassiveModalOpen,
+      setIsAddPassiveModalOpen,
+      isAddFixedModalOpen,
+      setIsAddFixedModalOpen,
 
       addTransaction,
+      updateAccountBalance,
+      addCashAccount,
+      addPassiveIncome,
+      addFixedExpense,
       buyStock,
       sellStock,
       markFixedExpensePaid,

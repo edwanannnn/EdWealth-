@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { TransactionType } from '../types';
 
 export const AddTransactionModal: React.FC = () => {
-  const { isAddTxModalOpen, setIsAddTxModalOpen, addTransaction, cashAccounts } = useApp();
+  const { isAddTxModalOpen, setIsAddTxModalOpen, addTxDefaultType, addTransaction, cashAccounts } = useApp();
 
-  const [type, setType] = useState<TransactionType>('EXPENSE');
+  const [type, setType] = useState<TransactionType>(addTxDefaultType || 'EXPENSE');
   const [title, setTitle] = useState('');
   const [amount, setAmount] = useState<number>(0);
   const [category, setCategory] = useState('Makanan');
@@ -14,6 +14,22 @@ export const AddTransactionModal: React.FC = () => {
 
   const expenseCategories = ['Makanan', 'Transportasi', 'Tagihan Rutin', 'Belanja', 'Hiburan', 'Kesehatan', 'Pendidikan', 'Lain-lain'];
   const incomeCategories = ['Gaji', 'Dividen', 'Bonus & THR', 'Bisnis', 'Hasil Investasi', 'Pemasukan Lain'];
+
+  useEffect(() => {
+    if (isAddTxModalOpen) {
+      setType(addTxDefaultType);
+      if (addTxDefaultType === 'INCOME') {
+        setCategory('Gaji');
+      } else if (addTxDefaultType === 'TRANSFER') {
+        setCategory('Transfer Internal');
+      } else {
+        setCategory('Makanan');
+      }
+      if (!accountId && cashAccounts.length > 0) {
+        setAccountId(cashAccounts[0].id);
+      }
+    }
+  }, [isAddTxModalOpen, addTxDefaultType, cashAccounts]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

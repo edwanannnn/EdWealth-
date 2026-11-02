@@ -21,10 +21,13 @@ export const AuthScreen: React.FC<{ onSkipDemo?: () => void }> = ({ onSkipDemo }
 
     try {
       if (isRegister) {
+        // Use current URL origin so mobile phone redirects to phone's active address instead of localhost
+        const redirectUrl = window.location.origin;
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
+            emailRedirectTo: redirectUrl,
             data: {
               full_name: fullName || email.split('@')[0],
             }
@@ -33,8 +36,10 @@ export const AuthScreen: React.FC<{ onSkipDemo?: () => void }> = ({ onSkipDemo }
 
         if (error) throw error;
 
-        if (data.user) {
-          setSuccessMsg('Akun berhasil dibuat! Silakan masuk.');
+        if (data.session) {
+          setSuccessMsg('Pendaftaran berhasil! Mengarahkan ke dashboard...');
+        } else if (data.user) {
+          setSuccessMsg('Akun berhasil dibuat! Silakan cek email Anda untuk konfirmasi atau coba langsung masuk.');
           setIsRegister(false);
         }
       } else {
@@ -57,7 +62,7 @@ export const AuthScreen: React.FC<{ onSkipDemo?: () => void }> = ({ onSkipDemo }
   };
 
   return (
-    <div className="min-h-screen bg-surface flex flex-col items-center justify-center p-4 max-w-lg mx-auto animate-fadeIn select-none">
+    <div className="min-h-screen bg-surface flex flex-col items-center justify-center p-4 max-w-lg mx-auto animate-fadeIn">
       {/* Brand Header */}
       <div className="relative flex flex-col items-center pt-2 pb-5 text-center w-full">
         <div className="absolute -top-4 w-44 h-44 bg-tertiary-fixed-dim/20 rounded-full blur-3xl pointer-events-none"></div>
